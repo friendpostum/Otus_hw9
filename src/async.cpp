@@ -25,18 +25,15 @@ using t_id = size_t;
 struct Bulk {
     ~Bulk() {
         if (conn_pool.empty()) {
-            //  std::cout << "try disconnect: \n" << std::endl;
             while (!done);
             stop = true;
             cv_log.notify_one();
             cv_file.notify_all();
-            // std::cout << "disconnect: " << std::endl;
         }
 
         log.join();
         file1.join();
         file2.join();
-     //   std::cout << "~Bulk()" << '\n';
     }
 
     void connect(const t_id &id) {
@@ -57,22 +54,6 @@ struct Bulk {
     void disconnect(const t_id &id) {
             conn_pool.extract(id);
     }
-
-/*    void to_cout() const {
-        for (const auto &b: tasks_log) {
-            std::cout << b.cmd << std::endl;
-        }
-    }
-
-    void to_file() {
-        while (!tasks_log.empty()) {
-            auto b = tasks_log.front();
-            std::ofstream file(b.t_stamp);
-            file << b.cmd;
-            file.close();
-            tasks_log.pop_front();
-        }
-    }*/
 
 private:
     bool input(std::string&& line, const t_id &id) {

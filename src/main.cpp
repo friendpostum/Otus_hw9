@@ -73,60 +73,6 @@ void testMultipleClientThreads() {
     t3.join();
 }
 
-void tasks(std::string info) {
-    auto id3 = connect(3);
-
-//    std::string message = info + " id: " + std::to_string(id3) + "\n";
-//    std::cout << message;
-
-    receive("cmd1", 4, id3);
-    receive("cmd2", 4, id3);
-    receive("{", 1, id3);
-    receive("cmd3", 4, id3);
-    receive("cmd4", 4, id3);
-    receive("}", 1, id3);
-    receive("{", 1, id3);
-    receive("cmd5", 4, id3);
-    receive("cmd6", 4, id3);
-    receive("{", 1, id3);
-    receive("cmd7", 4, id3);
-    receive("cmd8", 4, id3);
-    receive("}", 1, id3);
-    receive("cmd9", 4, id3);
-    receive("}", 1, id3);
-    receive("{", 1, id3);
-    receive("cmd10", 4, id3);
-    receive("cmd11", 4, id3);
-
-//    auto id4 = connect(4);
-//    receive("cmd1", 4, id4);
-//    receive("cmd2", 4, id4);
-//    receive("{", 1, id4);
-//    receive("cmd3", 4, id4);
-//    receive("cmd4", 4, id4);
-//    receive("}", 1, id4);
-//    receive("{", 1, id4);
-//    receive("cmd5", 4, id4);
-//    receive("cmd6", 4, id4);
-//    receive("{", 1, id4);
-//    receive("cmd7", 4, id4);
-//    receive("cmd8", 4, id4);
-//    receive("}", 1, id4);
-//    receive("cmd9", 4, id4);
-//    receive("}", 1, id4);
-//    receive("{", 1, id4);
-//    receive("cmd10", 4, id4);
-//    receive("cmd11", 4, id4);
-
-    disconnect(id3);
-    // disconnect(id4);
-
-    // std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(5000));
-
-//    message = info + " exit" + "\n";
-//    std::cout << message;
-}
-
 
 int main() {
     std::cout << "===\n=== Send commands from a single thread ===\n===\n" << std::endl;
