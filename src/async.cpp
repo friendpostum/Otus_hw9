@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <map>
 #include <queue>
 #include <thread>
@@ -43,6 +42,7 @@ struct Bulk {
     void receive(const char *buff, size_t buff_size, const t_id &id) {
         std::string line(buff, buff_size);
         if (input(std::move(line), id)) {
+            done = false;
             {
                 std::unique_lock<std::mutex> lk(m_log);
                 tasks_log.push_back(std::move(conn_pool[id].block_cmd));
@@ -122,7 +122,7 @@ private:
     std::thread file2{&Bulk::to_file_q, this, 3};
 
     bool stop{false};
-    bool done{false};
+    bool done{true};
     std::map<t_id, conn_t> conn_pool;
     std::deque<block_t> tasks_log;
     std::queue<block_t> tasks_file;
