@@ -44,9 +44,6 @@ void testSingleClientThread (){
 
     disconnect(id3);
     disconnect(id4);
-    // receive(id4);
-    //   disconnect(id4);
-
 }
 
 void testMultipleClientThreads() {
@@ -55,8 +52,6 @@ void testMultipleClientThreads() {
     auto worker = [numberOfCommandsPerThread](std::size_t threadNumber, std::size_t blockSize) {
         auto handle = connect(blockSize);
         for (std::size_t i = 0; i < numberOfCommandsPerThread; ++i) {
-           // std::string command = std::to_string(threadNumber);
-            //command += '-' + std::to_string(i);
             std::string command{"cmd"};
             command += std::to_string(i+1);
             receive(command.data(), command.size(), handle);
@@ -78,8 +73,8 @@ int main() {
     std::cout << "===\n=== Send commands from a single thread ===\n===\n" << std::endl;
     testSingleClientThread();
 
-    std::cout << "\n===\n=== Send commands from multiple threads ===\n===\n" << std::endl;
-    testMultipleClientThreads();
+//    std::cout << "\n===\n=== Send commands from multiple threads ===\n===\n" << std::endl;
+//    testMultipleClientThreads();
 
     return 0;
 }
