@@ -24,8 +24,8 @@ using t_id = size_t;
 struct Bulk {
 
     ~Bulk() {
+        std::cout << "\n~Bulk()\n";
         while (!done);
-        stop = true;
         q_log.ret_ctrl();
         q_file.ret_ctrl();
 
@@ -76,27 +76,26 @@ private:
 
     void to_log_q() {
         block_t block;
-        while (!stop) {
+        while (true) {
             if (q_log.wait_and_pop(block)) {
                 std::cout << block.cmd << '\n';
                 q_file.push(block);
-            }
+            } else break;
         }
     }
 
     void to_file_q(size_t id) {
         block_t block;
-        while (!stop) {
+        while (true) {
             if (q_file.wait_and_pop(block)) {
                 std::ofstream file(block.t_stamp + std::to_string(id) + ".log");
                 file << block.cmd;
                 file.close();
-                done = q_log.empty() && q_file.empty() && conn_pool.empty();
-            }
+                done = conn_pool.empty() && q_log.empty() && q_file.empty();
+            } else break;
         }
     }
 
-    bool stop{false};
     bool done{true};
     std::map<t_id, conn_t> conn_pool;
     safe_queue<block_t> q_log{};
