@@ -3,27 +3,31 @@
 #include <memory>
 
 template<typename T>
-class Queue {
-
-private:
-    mutable std::mutex mut;
-    std::queue<T> data_queue;
-    std::condition_variable cv;
-
-public:
-    Queue() = default;
+struct safe_queue {
+    safe_queue() = default;
 
     void push(T new_value) {
         std::lock_guard<std::mutex> lk(mut);
         data_queue.push(std::move(new_value));
+        ext_ctrl = false;
         cv.notify_one();
     }
 
-    void wait_and_pop(T &value) {
+    void ret_ctrl(){
+        ext_ctrl = true;
+        cv.notify_one();
+    }
+
+    bool wait_and_pop(T &value) {
         std::unique_lock<std::mutex> lk(mut);
-        cv.wait(lk, [this] { return !data_queue.empty(); });
-        value = std::move(data_queue.front());
-        data_queue.pop();
+        cv.wait(lk, [this] { return !data_queue.empty() || ext_ctrl; });
+        if (ext_ctrl) {
+            return false;
+        } else {
+            value = std::move(data_queue.front());
+            data_queue.pop();
+            return true;
+        }
     }
 
     std::shared_ptr<T> wait_and_pop() {
@@ -59,4 +63,9 @@ public:
         return data_queue.empty();
     }
 
+private:
+    mutable std::mutex mut;
+    bool ext_ctrl = false;
+    std::queue<T> data_queue;
+    std::condition_variable cv;
 };

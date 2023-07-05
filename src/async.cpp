@@ -1,29 +1,13 @@
 #include <iostream>
 #include <fstream>
 #include <map>
-#include <queue>
 #include <thread>
-#include <condition_variable>
 
-#include "queue.h"
-#include <boost/lockfree/queue.hpp>
+#include "safe_queue.h"
 
 struct block_t {
     std::string t_stamp;
     std::string cmd;
-};
-
-struct block_t1 {
-    block_t1() = default;
-
-    block_t1(const block_t1 &rhs) = default;
-
-    block_t1 &operator=(const block_t1 &rhs) = default;
-
-    ~block_t1() = default;
-
-    int t_stamp;
-    // char cmd[];
 };
 
 struct conn_t {
@@ -38,13 +22,12 @@ struct conn_t {
 using t_id = size_t;
 
 struct Bulk {
+
     ~Bulk() {
-        if (conn_pool.empty()) {
-            while (!done);
-            stop = true;
-            cv_log.notify_one();
-            cv_file.notify_all();
-        }
+        while (!done);
+        stop = true;
+        q_log.ret_ctrl();
+        q_file.ret_ctrl();
 
         log.join();
         file1.join();
@@ -60,7 +43,6 @@ struct Bulk {
         if (input(std::move(line), id)) {
             done = false;
             q_log.push(std::move(conn_pool[id].block_cmd));
-            cv_log.notify_one();
         }
     }
 
@@ -95,51 +77,33 @@ private:
     void to_log_q() {
         block_t block;
         while (!stop) {
-            std::unique_lock<std::mutex> lk(m_log);
-            cv_log.wait(lk, [this, &block]() { return q_log.try_pop(block) || stop; });
-
-            if (!stop) {
+            if (q_log.wait_and_pop(block)) {
                 std::cout << block.cmd << '\n';
-                lk.unlock();
                 q_file.push(block);
             }
-
-            cv_file.notify_one();
         }
     }
 
     void to_file_q(size_t id) {
         block_t block;
         while (!stop) {
-            std::unique_lock<std::mutex> lk(m_file);
-            cv_file.wait(lk, [this, &block]() { return q_file.try_pop(block) || stop; });
-
-            // std::cout << "file " << block.t_stamp + std::to_string(id) << "\n";
-
-            if (!stop) {
+            if (q_file.wait_and_pop(block)) {
                 std::ofstream file(block.t_stamp + std::to_string(id) + ".log");
                 file << block.cmd;
                 file.close();
-                lk.unlock();
-                done = q_log.empty() && q_file.empty();
+                done = q_log.empty() && q_file.empty() && conn_pool.empty();
             }
         }
     }
 
-    std::thread log{&Bulk::to_log_q, this};
-    std::thread file1{&Bulk::to_file_q, this, 2};
-    std::thread file2{&Bulk::to_file_q, this, 3};
-
     bool stop{false};
     bool done{true};
     std::map<t_id, conn_t> conn_pool;
-    Queue<block_t> q_log;
-    Queue<block_t> q_file;
-    std::mutex m_log;
-    std::mutex m_file;
-    std::condition_variable cv_log;
-    std::condition_variable cv_file;
-
+    safe_queue<block_t> q_log{};
+    safe_queue<block_t> q_file{};
+    std::thread log{&Bulk::to_log_q, this};
+    std::thread file1{&Bulk::to_file_q, this, 2};
+    std::thread file2{&Bulk::to_file_q, this, 3};
 };
 
 Bulk bulk;

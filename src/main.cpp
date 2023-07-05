@@ -73,8 +73,8 @@ int main() {
     std::cout << "===\n=== Send commands from a single thread ===\n===\n" << std::endl;
     testSingleClientThread();
 
-//    std::cout << "\n===\n=== Send commands from multiple threads ===\n===\n" << std::endl;
-//    testMultipleClientThreads();
+    std::cout << "\n===\n=== Send commands from multiple threads ===\n===\n" << std::endl;
+    testMultipleClientThreads();
 
     return 0;
 }
