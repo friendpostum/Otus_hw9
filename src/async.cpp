@@ -3,7 +3,7 @@
 #include <map>
 #include <thread>
 
-#include "safe_queue.h"
+#include "ts_queue.h"
 
 struct block_t {
     std::string t_stamp;
@@ -22,12 +22,10 @@ struct conn_t {
 using t_id = size_t;
 
 struct Bulk {
-
     ~Bulk() {
-        std::cout << "\n~Bulk()\n";
-        while (!done);
-        q_log.ret_ctrl();
-        q_file.ret_ctrl();
+        while (!finished);
+        q_log.wake_and_done();
+        q_file.wake_and_done();
 
         log.join();
         file1.join();
@@ -41,7 +39,7 @@ struct Bulk {
     void receive(const char *buff, size_t buff_size, const t_id &id) {
         std::string line(buff, buff_size);
         if (input(std::move(line), id)) {
-            done = false;
+            finished = false;
             q_log.push(std::move(conn_pool[id].block_cmd));
         }
     }
@@ -91,15 +89,15 @@ private:
                 std::ofstream file(block.t_stamp + std::to_string(id) + ".log");
                 file << block.cmd;
                 file.close();
-                done = conn_pool.empty() && q_log.empty() && q_file.empty();
+                finished = conn_pool.empty() && q_log.empty() && q_file.empty();
             } else break;
         }
     }
 
-    bool done{true};
+    bool finished{false};
     std::map<t_id, conn_t> conn_pool;
-    safe_queue<block_t> q_log{};
-    safe_queue<block_t> q_file{};
+    ts_queue<block_t> q_log{};
+    ts_queue<block_t> q_file{};
     std::thread log{&Bulk::to_log_q, this};
     std::thread file1{&Bulk::to_file_q, this, 2};
     std::thread file2{&Bulk::to_file_q, this, 3};

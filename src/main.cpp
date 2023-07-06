@@ -1,6 +1,6 @@
 #include "async.cpp"
 
-void testSingleClientThread (){
+void testSingleClientThread() {
     auto id3 = connect(3);
 
     receive("cmd1", 4, id3);
@@ -53,7 +53,7 @@ void testMultipleClientThreads() {
         auto handle = connect(blockSize);
         for (std::size_t i = 0; i < numberOfCommandsPerThread; ++i) {
             std::string command{"cmd"};
-            command += std::to_string(i+1);
+            command += std::to_string(i + 1);
             receive(command.data(), command.size(), handle);
         }
         disconnect(handle);
