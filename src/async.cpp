@@ -74,23 +74,19 @@ private:
 
     void to_log_q() {
         block_t block;
-        while (true) {
-            if (q_log.wait_and_pop(block)) {
-                std::cout << block.cmd << '\n';
-                q_file.push(block);
-            } else break;
+        while (q_log.wait_and_pop(block)) {
+            std::cout << block.cmd << '\n';
+            q_file.push(block);
         }
     }
 
     void to_file_q(size_t id) {
         block_t block;
-        while (true) {
-            if (q_file.wait_and_pop(block)) {
-                std::ofstream file(block.t_stamp + std::to_string(id) + ".log");
-                file << block.cmd;
-                file.close();
-                finished = conn_pool.empty() && q_log.empty() && q_file.empty();
-            } else break;
+        while (q_file.wait_and_pop(block)) {
+            std::ofstream file(block.t_stamp + std::to_string(id) + ".log");
+            file << block.cmd;
+            file.close();
+            finished = conn_pool.empty() && q_log.empty() && q_file.empty();
         }
     }
 
